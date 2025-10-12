@@ -1,9 +1,5 @@
 {
   "src": [
-    "pages/Index",
-    "pages/SW",
-    "pages/DS",
-    "pages/YY",
-    "pages/ZDY"
+    "pages/Index"
   ]
 }
