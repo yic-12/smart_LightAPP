@@ -38,15 +38,26 @@ import { TokenGenerator } from "../inter/MD5";
  * - 提供统一的网络请求接口
  */
 export class HttpUtil {
-  
+
   // ==================== 单例模式实现 ====================
   
   /**
    * 单例实例
    * 私有静态属性，存储唯一的HttpUtil实例
    */
+
+
   private static instance: HttpUtil = new HttpUtil()
-  
+  private eggTimer?: number
+
+  // 定义常量存储特殊设备标识（提高可维护性）
+  private readonly SPECIAL_DEVICE_ID = 'b39ef83110374aada64d8dc1b99b6c68';
+  private readonly GROUP_DEVICE_TYPE = 'inSona_group';
+  private readonly INTERVAL = 10000; // 10秒间隔
+  private eggTimer1: number | null = null; // 单个定时器ID
+  private currentIndex = 0; // 当前处理的设备索引
+
+
   /**
    * 私有构造函数
    * 防止外部直接实例化，确保单例模式
@@ -278,6 +289,100 @@ export class HttpUtil {
     })
   }
 
+  /**
+   * 仅设置设备开关状态（不携带亮度、色温、颜色）
+   *
+   * 功能说明：
+   * - 某些特殊设备不支持亮度/色温/颜色参数，仅能接收开关状态
+   * - 本方法仅发送 control_sub_id 与 control_sub_state（以及必要元信息）
+   *
+   * 参数说明：
+   * - url: string - API请求地址
+   * - state: string - 设备状态（'0'=开启，'1'=关闭）
+   * - id: string - 设备ID
+   */
+  async setDeviceStateOnly(url: string, state: string, id: string) {
+    // 判断设备是否关闭
+    let isOff = state === '1'
+
+    // 生成时间戳和认证令牌
+    const timestamp: string = Date.now().toString()
+    const token: string = (await TokenGenerator.generateToken(timestamp)).toLowerCase()
+
+    // 构建设备控制数据
+    let data1: Data2 = {
+      timestamp: timestamp,        // 请求时间戳，用于认证和防重放（与token一致）
+      token: token,                // 认证令牌：MD5(timestamp + key)
+      control_sub_id: id,          // 控制的子设备ID（目标灯光设备ID）
+      control_sub_state: state,    // 设备控制状态：'0'=打开，'1'=关闭
+      r_channel: 0,               // 红色通道值，可选参数
+      g_channel: 0,               // 绿色通道值，可选参数
+      b_channel: 0,               // 蓝色通道值，可选参数
+      w_channel: 66,      // 白光通道值（亮度控制），可选参数
+      y_channel: 66,      // 黄光通道值（色温控制），可选参数
+      control_state: '',          // 控制状态，可选参数
+      type_uuid: 'inSona_group',   // 设备类型UUID
+      lightness: 0,               // 亮度值，可选参数（与w_channel可能重复，取决于API设计）
+    }
+
+    // 构建 x-www-form-urlencoded 请求体（避免参数解构语法）
+    let formPairs1: string[] = []
+    const entries1: Array<[string, string | number]> = [
+      ['timestamp', data1.timestamp],
+      ['token', data1.token],
+      ['control_sub_id', data1.control_sub_id],
+      ['control_sub_state', data1.control_sub_state],
+      ['r_channel', data1.r_channel ?? ''],
+      ['g_channel', data1.g_channel ?? ''],
+      ['b_channel', data1.b_channel ?? ''],
+      ['w_channel', data1.w_channel ?? ''],
+      ['y_channel', data1.y_channel ?? ''],
+      ['control_state', data1.control_state ?? ''],
+      ['type_uuid', data1.type_uuid],
+      ['lightness', data1.lightness ?? ''],
+    ]
+
+    // 编码表单数据
+    for (let i = 0; i < entries1.length; i++) {
+      const key = entries1[i][0]
+      const value = entries1[i][1]
+      if (value !== undefined && value !== null && String(value) !== '') {
+        formPairs1.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+      }
+    }
+    const formBody = formPairs1.join('&')
+
+    // 配置HTTP请求选项
+    let options: http.HttpRequestOptions = {
+      method: http.RequestMethod.POST,
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      extraData: formBody,
+      connectTimeout: 9000,  // 前端发送数据给后端如果9秒没有结果，前端主动终止行为
+      readTimeout: 9000,      // 读取数据超过9秒，告诉前端请求失败
+    }
+
+    // 创建HTTP请求并发送
+    const httpRequest = http.createHttp()
+    httpRequest.request(url, options, (error: Error, data: http.HttpResponse) => {
+      // error没有内容代表成功
+      if (!error) {
+        console.log(`请求成功，返回数据：${JSON.stringify(data)}`)
+        // 取消订阅HTTP响应头事件
+        httpRequest.off('headersReceive');
+        // 当该请求使用完毕时，开发者务必调用destroy方法主动销毁该JavaScript Object
+        httpRequest.destroy();
+      } else {
+        console.log(`请求失败，具体原因：${JSON.stringify(error)}`)
+        // 取消订阅HTTP响应头事件
+        httpRequest.off('headersReceive');
+        // 当该请求使用完毕时，调用destroy方法主动销毁该JavaScript Object
+        httpRequest.destroy();
+      }
+    })
+  }
+
   // ==================== 多设备控制方法 ====================
   
   /**
@@ -343,20 +448,87 @@ export class HttpUtil {
     for (let i = 0; i < deviceControls.length; i++) {
       const item = deviceControls[i]
       try {
-        await this.setLightColorBrightness(
-          url,
-          item.w_channel ?? 0,
-          item.y_channel ?? 0,
-          item.control_sub_state,
-          item.r_channel ?? 0,
-          item.g_channel ?? 0,
-          item.b_channel ?? 0,
-          item.control_sub_id,
-        )
+        // 特殊设备（通道平板灯）不接受色温/亮度/颜色，只发送开关状态
+        if (item.control_sub_id === 'b39ef83110374aada64d8dc1b99b6c68' || item.type_uuid === 'inSona_group') {
+          await this.setDeviceStateOnly(url, item.control_sub_state, item.control_sub_id)
+        } else {
+          await this.setLightColorBrightness(
+            url,
+            item.w_channel ?? 0,
+            item.y_channel ?? 0,
+            item.control_sub_state,
+            item.r_channel ?? 0,
+            item.g_channel ?? 0,
+            item.b_channel ?? 0,
+            item.control_sub_id,
+          )
+        }
         console.log(`多设备子请求成功：id=${item.control_sub_id}`)
       } catch (e) {
         console.error(`多设备子请求失败：id=${item.control_sub_id}, err=${e}`)
       }
     }
   }
+
+  async controlColorMultipleDevicesEasterEgg(url: string, deviceControls: DeviceControlItem[]) {
+    // 清除已有定时器，避免重复触发
+    this.clearTimer();
+    // 如果没有设备，直接返回
+    if (deviceControls.length === 0) return;
+    // 定义处理单个设备的函数
+    const processDevice = async () => {
+      // 获取当前要处理的设备（通过索引循环）
+
+      const currentDevice = deviceControls[this.currentIndex];
+
+      try {
+        // 根据设备类型处理
+        if (currentDevice.control_sub_id === this.SPECIAL_DEVICE_ID || currentDevice.type_uuid === this.GROUP_DEVICE_TYPE) {
+          await this.setDeviceStateOnly(url, currentDevice.control_sub_state, currentDevice.control_sub_id);
+        } else {
+          await this.setLightColorBrightness(
+            url,
+            currentDevice.w_channel ?? 0,
+            currentDevice.y_channel ?? 0,
+            currentDevice.control_sub_state,
+            currentDevice.r_channel ?? 0,
+            currentDevice.g_channel ?? 0,
+            currentDevice.b_channel ?? 0,
+            currentDevice.control_sub_id,
+          );
+        }
+        console.log(`处理设备成功：id=${currentDevice.control_sub_id}（索引：${this.currentIndex}）`);
+      } catch (e) {
+        console.error(`处理设备失败：id=${currentDevice.control_sub_id}，错误：${e}`);
+      }
+
+      // 计算下一个设备的索引（循环：处理完最后一个后回到第一个）
+      this.currentIndex = (this.currentIndex + 1) % deviceControls.length;
+      this.eggTimer = setTimeout(processDevice,200)
+      if(this.currentIndex===0){
+       this.destroy()
+      }
+    };
+
+    // 立即开始处理第一个设备（如果想先等10秒再开始，可改为 setTimeout(processDevice, this.INTERVAL)）
+    processDevice();
+
+  }
+
+  // 清除定时器的方法（用于停止或重置）
+  private clearTimer() {
+    if (this.eggTimer) {
+      clearTimeout(this.eggTimer);
+      this.eggTimer1 = null;
+      this.currentIndex = 0; // 重置索引
+    }
+  }
+
+  // 组件卸载时调用，防止内存泄漏
+  destroy() {
+    this.clearTimer();
+  }
+
+
+
 }

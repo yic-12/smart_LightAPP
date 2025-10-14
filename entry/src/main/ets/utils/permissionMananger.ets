@@ -131,7 +131,7 @@ export class PermissionManager {
 
       // 获取上下文（这里假设getContext是一个可以获取到UI能力上下文的方法）
       // UIAbilityContext是HarmonyOS UI能力的上下文，提供应用级别的功能
-      let context: Context = getContext() as common.UIAbilityContext;
+      let context: Context = getContext() as Context;
 
       // 请求用户授权指定的权限
       // requestPermissionsFromUser()方法会弹出权限请求对话框

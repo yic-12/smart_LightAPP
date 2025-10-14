@@ -91,7 +91,7 @@ struct SW {
    * 
    * 当前使用校园网地址，如需切换网络环境，请修改此URL
    */
-  URL: string = "http://10.214.166.140:8081" // 校园网地址
+  URL: string = "http://192.168.2.170:8081" // 校园网地址
   
   /**
    * 请求时间戳
@@ -458,9 +458,8 @@ struct SW {
               
               // 调用设置亮度方法
               this.setBrightness(this.currentBrightness, this.currentColorTemperature, this.selectedDeviceId)
-              
-              // 在控制台输出调试信息
-              console.log(`请求GET `)
+
+
               
               // 保存设置到本地存储
               const ctx: Context = EntryAbility.appContext

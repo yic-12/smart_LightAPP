@@ -31,7 +31,7 @@ import SpeechRecognizerManager from '../utils/SpeechRecognizerManager'
 // 导入HTTP工具类
 import { HttpUtil } from '../inter/HttpUtil'
 // 导入设备控制数据
-import { deviceControls, turn, deviceClass, exper, per, break1 } from '../utils/device'
+import { deviceControls, turn, turnoff,deviceClass, exper, per, break1 } from '../utils/device'
 
 // ==================== 语音识别组件 ====================
 
@@ -507,7 +507,7 @@ export struct YY {
    * 
    * 当前使用校园网地址，如需切换网络环境，请修改此URL
    */
-  URL: string = "http://10.214.166.140:8081" // 校园网地址
+  URL: string = "http://192.168.2.170:8081" // 校园网地址
   
   /**
    * 请求时间戳
@@ -687,24 +687,23 @@ export struct YY {
       const controlState = isTurnOn ? '0' : '1'
       console.log(`控制状态: ${controlState} (${isTurnOn ? '开启' : '关闭'})`)
 
-      // 批量控制所有设备
-      for (let i = 0; i < turn.length; i++) {
-        const device = turn[i]
-        console.log(`正在控制设备 ${i + 1}/${turn.length}: ${device.name} (${device.control_sub_id})`)
 
-        try {
-          await HttpUtil.getInstance().setLightBrightness(
-            `${this.URL}${this.url2}`,
-            66, // 默认亮度
-            66, // 默认色温
-            controlState,
-            device.control_sub_id
-          )
-          console.log(`设备 ${i + 1} 控制成功`)
-        } catch (deviceError) {
-          console.error(`设备 ${i + 1} 控制失败:`, deviceError)
+      if(action.includes('全部')&& action.includes('开')){
+        try{
+          await HttpUtil.getInstance().controlColorMultipleDevices(`${this.URL}${this.url2}`,turn)
+          console.log(`控制成功`)
+        }catch (deviceError) {
+          console.error(`控制失败:`, deviceError)
+        }
+      }else if(action.includes('关')&& action.includes('全部')){
+        try{
+          await HttpUtil.getInstance().controlColorMultipleDevices(`${this.URL}${this.url2}`,turnoff)
+          console.log(`控制成功`)
+        }catch (deviceError) {
+          console.error(`控制失败:`, deviceError)
         }
       }
+
 
       this.sceneControlResult = `所有灯${isTurnOn ? '已开启' : '已关闭'}！`
       console.log(`灯光控制成功: ${action}`)

@@ -114,7 +114,7 @@ export struct DS {
    * 
    * 当前使用校园网地址，如需切换网络环境，请修改此URL
    */
-  URL: string = "http://10.214.166.140:8081";
+  URL: string = "http://192.168.2.170:8081";
   
   /**
    * 请求时间戳
@@ -138,7 +138,7 @@ export struct DS {
    * 应用上下文
    * 用于访问应用级别的资源和功能
    */
-  context: Context = getContext(this) as Context;
+  context: Context = getContext() as Context;
 
   // ==================== 请求数据模型 ====================
   

@@ -25,7 +25,28 @@ import { Data1, Data2, DeviceControlItem } from "../inter/Interface1";
 // 导入HTTP工具类
 import { HttpUtil } from "../inter/HttpUtil";
 // 导入设备控制数据
-import { deviceControls } from "../utils/device";
+import { deviceControls,exper1 } from "../utils/device";
+// 彩蛋设备与批量场景
+import { easterEgg1,easterEgg2, EasterEggController, MusicBeatMode } from "../utils/EasterEgg";
+import { turn, turnoff } from "../utils/device";
+
+// ==================== 接口定义 ====================
+
+/**
+ * BeatPatternInfo - 节拍模式信息接口
+ * 
+ * 功能说明：
+ * - 定义节拍模式的基本信息结构
+ * - 用于UI显示和类型安全
+ * 
+ * 字段说明：
+ * - name: 节拍模式名称
+ * - bpm: 每分钟节拍数
+ */
+interface BeatPatternInfo {
+  name: string;    // 节拍模式名称
+  bpm: number;     // 每分钟节拍数
+}
 
 /**
  * WD组件 - 设置页面主组件
@@ -46,7 +67,7 @@ export struct WD {
    * 
    * 当前使用校园网地址，如需切换网络环境，请修改此URL
    */
-  URL: string = "http://10.214.166.140:8081" // 校园网地址
+  URL: string = "http://192.168.2.170:8081" // 校园网地址
   
   /**
    * GET请求的API路径
@@ -104,6 +125,7 @@ export struct WD {
    * @State装饰器表示这是响应式状态，数据变化时UI会自动更新
    */
   @State devices: DeviceControlItem[] = deviceControls
+  @State eggRunning: boolean = false
   
   /**
    * 当前选中的设备索引
@@ -116,6 +138,19 @@ export struct WD {
    * 用于网络请求时指定要操作的设备
    */
   @State selectedDeviceId: string = ''
+
+  // ==================== 彩蛋控制状态 ====================
+  /**
+   * 彩蛋节拍跟随状态
+   * 用于控制彩蛋按钮的显示状态
+   */
+  @State isEasterEggFlashing: boolean = false
+  
+  /**
+   * 当前音乐节拍模式
+   * 用于显示和切换节拍模式
+   */
+  @State currentBeatMode: MusicBeatMode = MusicBeatMode.MODERATE_POP
 
   // ==================== 组件生命周期 ====================
   
@@ -251,6 +286,53 @@ export struct WD {
             .width('100%')         // 设置宽度为100%
             .margin({ bottom: 12 }) // 设置下边距为12像素
 
+            // ==================== 音乐节拍模式选择 ====================
+            Column() {
+              Text('音乐节拍模式')
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor('#2c2c2c')
+                .margin({ bottom: 8 })
+              
+              // 节拍模式选择器
+              Row({ space: 8 }) {
+                ForEach(EasterEggController.getAllBeatPatterns(), (pattern: BeatPatternInfo, index: number) => {
+                  Button(pattern.name)
+                    .fontSize(12)
+                    .fontWeight(this.currentBeatMode === index ? FontWeight.Bold : FontWeight.Normal)
+                    .fontColor(this.currentBeatMode === index ? Color.White : '#666666')
+                    .backgroundColor(this.currentBeatMode === index ? '#007AFF' : '#F0F0F0')
+                    .borderRadius(8)
+                    .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                    .onClick(() => {
+                      this.currentBeatMode = index as MusicBeatMode;
+                      EasterEggController.setBeatMode(this.currentBeatMode);
+                      console.log(`切换到节拍模式: ${pattern.name} (${pattern.bpm} BPM)`);
+                    })
+                })
+              }
+              .justifyContent(FlexAlign.SpaceEvenly)
+              .width('100%')
+              .margin({ bottom: 12 })
+              
+
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+
+            // ==================== 节拍控制按钮 ====================
+            Button(this.isEasterEggFlashing ? "停止节拍" : "开启节拍")
+              .fontSize(18)                    // 设置字体大小为18像素
+              .fontWeight(FontWeight.Bold)     // 设置字体粗细为粗体
+              .fontColor(this.isEasterEggFlashing ? Color.Red : Color.Blue)  // 根据状态设置颜色
+              .backgroundColor(this.isEasterEggFlashing ? '#FFE6E6' : '#E6F3FF')  // 根据状态设置背景色
+              .onClick(async () => {
+                // 切换彩蛋节拍跟随状态
+                this.isEasterEggFlashing = await EasterEggController.toggleEasterEggFlash();
+                console.log(`节拍状态切换: ${this.isEasterEggFlashing ? '开启' : '关闭'}`);
+              })
+              .margin({ bottom: 12 }) // 设置下边距为12像素
+
             // ==================== GET请求按钮 ====================
             Button("GET(查询状态)")
               .fontSize(18)                    // 设置字体大小为18像素
@@ -276,37 +358,17 @@ export struct WD {
               .margin({ bottom: 12 }) // 设置下边距为12像素
 
             // ==================== POST请求按钮 ====================
-            Button("POST(控制设备)")
+            Button("彩蛋")
               .fontSize(18)                    // 设置字体大小为18像素
               .fontWeight(FontWeight.Bold)     // 设置字体粗细为粗体
-              .fontColor(Color.Blue)            // 设置字体颜色为蓝色
+              .fontColor(Color.Green)          // 设置字体颜色为绿色
               .onClick(async () => {
-                // 异步点击事件处理函数
-                try {
-                  // 设置设备控制参数
-                  // 优先使用当前选中的设备ID，如果没有则使用默认值
-                  this.data2.control_sub_id =
-                    this.selectedDeviceId || this.data2.control_sub_id || '6b3f2977496844fd879845645099c5dd'
-                  // 设置设备状态（'1'表示关闭，'0'表示开启）
-                  this.data2.control_sub_state = this.data2.control_sub_state || '1'
-                  // 设置设备类型
-                  this.data2.type_uuid = this.data2.type_uuid || 'LIGHT_GROUP'
-
-                  // 发送POST请求控制设备
-                  await HttpUtil.getInstance().setLightBrightness(
-                    `${this.URL}${this.url2}`,           // 请求URL
-                    this.data2.w_channel ?? 100,        // 白光通道值（亮度）
-                    this.data2.y_channel ?? 100,        // 暖光通道值（色温）
-                    this.data2.control_sub_state,       // 设备状态
-                    this.data2.control_sub_id            // 设备ID
-                  )
-
-                  // 在控制台输出请求信息，便于调试
-                  console.log(`请求POST  ${this.URL}${this.url2}`)
-                } catch (error) {
-                  // 捕获并处理请求错误
-                  console.error('POST 请求失败:', error)
-                }
+             //   if(!this.eggRunning){
+                  this.controlSceneDevices()
+             //   }
+            //   else{
+             //    await HttpUtil.getInstance().destroy()
+           //    }
               })
           }
           .width('100%')           // 设置宽度为100%
@@ -332,5 +394,62 @@ export struct WD {
     .edgeEffect(EdgeEffect.Spring)           // 设置边缘效果为弹簧效果
     .width('100%')                          // 设置宽度为100%
     .height('100%')                         // 设置高度为100%
+  }
+  
+  // ==================== 组件销毁处理 ====================
+  
+  /**
+   * 组件即将销毁时的生命周期回调
+   * 在组件销毁前执行清理操作
+   */
+  aboutToDisappear() {
+    // 如果彩蛋正在闪烁，停止闪烁
+    if (this.isEasterEggFlashing) {
+      EasterEggController.stopEasterEggFlash();
+      this.isEasterEggFlashing = false;
+    }
+  }
+
+  private async controlSceneDevices(): Promise<void> {
+  //  if (this.eggRunning) return
+   // this.eggRunning = true
+    try {
+      // 获取当前选中的场景数据
+      const sceneData =exper1
+      const mappedDevices: DeviceControlItem[] = [];
+      const brightness:number[]=[99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99]
+      const sw:number[]= [30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]
+      const r:number[]= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,200]
+      const g:number[]= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      const b:number[]= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      // 构建设备控制数据
+      for (let i = 0; i < sceneData.length; i++) {
+        const d = sceneData[i];
+        const item = {
+          control_sub_id: d.control_sub_id,           // 设备ID
+          control_sub_state:d.control_sub_state,    // 设备状态
+          r_channel: r[i],                     // 红色通道值
+          g_channel: g[i],                       //绿光通道值
+          b_channel: b[i],                       //蓝光通道值
+          w_channel: brightness[i],                     // 白光通道值
+          y_channel: sw[i],                     // 暖光通道值
+          type_uuid: d.type_uuid ? d.type_uuid : 'LIGHT_GROUP', // 设备类型
+        } as DeviceControlItem;
+        mappedDevices.push(item);
+      }
+
+      // 发送控制命令到多设备
+      await HttpUtil.getInstance().controlColorMultipleDevicesEasterEgg(
+        `${this.URL}${this.url2}`,
+        mappedDevices
+      )
+
+
+      // 日志输出
+      console.log('设备', JSON.stringify(mappedDevices));
+
+    } catch (error) {
+      console.error('场景设备控制失败:', error);
+    }
   }
 }

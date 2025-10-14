@@ -81,6 +81,7 @@ export struct ZDY {
    * @State装饰器表示这是响应式状态变量
    */
   @State selectedDevice: string = ""
+  @State Lighttype:string=""
   
   /**
    * 设备列表数据
@@ -116,7 +117,7 @@ export struct ZDY {
    * 
    * 当前使用校园网地址，如需切换网络环境，请修改此URL
    */
-  URL: string = "http://10.214.166.140:8081" // 校园网地址
+  URL: string = "http://192.168.2.170:8081" // 校园网地址
   
   /**
    * POST请求的API路径
@@ -222,6 +223,7 @@ export struct ZDY {
     if (this.deviceList.length > 0) {
       this.deviceIndex = 0
       this.selectedDevice = this.deviceList[0].deviceId
+      this.Lighttype=this.deviceList[0].type
       this.currentBrightness = this.deviceList[0].brightness
       this.currentColorTemperature = this.deviceList[0].colorTemperature
     }
@@ -246,6 +248,7 @@ export struct ZDY {
       this.deviceIndex = 0
       this.selectedDevice = this.deviceList1[0].deviceId
       this.currentBrightness = this.deviceList1[0].brightness
+      this.Lighttype=this.deviceList1[0].type
       this.currentColorTemperature = this.deviceList1[0].colorTemperature
     }
   }
@@ -268,7 +271,7 @@ export struct ZDY {
 
   /**
    * 选择设备方法
-   * 
+   *
    * 功能说明：
    * - 更新当前选中的设备
    * - 同步更新设备索引和相关状态
@@ -276,8 +279,9 @@ export struct ZDY {
    * 参数说明：
    * - deviceId: string - 要选择的设备ID
    */
-  private onSelectDevice(deviceId: string) {
+  private onSelectDevice(deviceId: string,type:string) {
     this.selectedDevice = deviceId
+    this.Lighttype=type
     const idx = this.deviceList.findIndex(d => d.deviceId === deviceId)
     if (idx >= 0) {
       this.deviceIndex = idx
@@ -337,7 +341,7 @@ export struct ZDY {
                 // 计算上一个设备的索引（支持循环）
                 this.deviceIndex = (this.deviceIndex - 1 + this.deviceList.length) % this.deviceList.length
                 // 选择上一个设备
-                this.onSelectDevice(this.deviceList[this.deviceIndex].deviceId)
+                this.onSelectDevice(this.deviceList[this.deviceIndex].deviceId,this.deviceList[this.deviceIndex].type)
               })
             
             // 空白占位符
@@ -351,7 +355,7 @@ export struct ZDY {
                 // 计算下一个设备的索引（支持循环）
                 this.deviceIndex = (this.deviceIndex + 1) % this.deviceList.length
                 // 选择下一个设备
-                this.onSelectDevice(this.deviceList[this.deviceIndex].deviceId)
+                this.onSelectDevice(this.deviceList[this.deviceIndex].deviceId,this.deviceList[this.deviceIndex].type)
               })
           }
           .width('100%')                     // 设置宽度为100%
@@ -392,7 +396,7 @@ export struct ZDY {
                 // 检查索引是否在有效范围内
                 if (i >= 0 && i < this.deviceList.length) {
                   this.deviceIndex = i                                    // 更新设备索引
-                  this.onSelectDevice(this.deviceList[i].deviceId)       // 选择对应设备
+                  this.onSelectDevice(this.deviceList[i].deviceId,this.deviceList[this.deviceIndex].type)       // 选择对应设备
                 }
               })
           }
@@ -419,15 +423,16 @@ export struct ZDY {
             // 状态图标
             Column() {
               if (this.getCurrentDeviceStatus()) {
-                // 开启状态
-                Text('💡')  // 灯泡图标
-                  .fontSize(40)                    // 设置字体大小为40像素
-                  .fontColor('#07C160')            // 设置字体颜色为绿色
-              } else {
                 // 关闭状态
                 Text('🔌')  // 插头图标
                   .fontSize(40)                    // 设置字体大小为40像素
                   .fontColor('#999999')            // 设置字体颜色为灰色
+
+              } else {
+                // 开启状态
+                Text('💡')  // 灯泡图标
+                  .fontSize(40)                    // 设置字体大小为40像素
+                  .fontColor('#07C160')            // 设置字体颜色为绿色
               }
             }
             .width(80)                         // 设置宽度为80像素
@@ -436,13 +441,13 @@ export struct ZDY {
             // 状态文本
             Column() {
               // 状态描述文本
-              Text(this.getCurrentDeviceStatus() ? '灯光已开启' : '灯光已关闭')
+              Text(this.getCurrentDeviceStatus() ? '灯光已关闭' : '灯光已开启')
                 .fontSize(18)                    // 设置字体大小为18像素
                 .fontWeight(FontWeight.Medium)   // 设置字体粗细为中等
                 .fontColor('#2c2c2c')            // 设置字体颜色为深灰色
               
               // 状态详情文本
-              Text(this.getCurrentDeviceStatus() ? '设备正在运行中' : '设备已关闭')
+              Text(this.getCurrentDeviceStatus() ? '设备已关闭' : '设备正在运行中')
                 .fontSize(14)                    // 设置字体大小为14像素
                 .fontColor('#666666')            // 设置字体颜色为灰色
                 .margin({ top: 5 })               // 设置上边距为5像素
@@ -452,7 +457,7 @@ export struct ZDY {
           }
           .width('100%')                         // 设置宽度为100%
           .padding(20)                           // 设置内边距为20像素
-          .backgroundColor(this.getCurrentDeviceStatus() ? '#F0F9FF' : '#F5F5F5')  // 根据状态设置背景色
+          .backgroundColor(this.getCurrentDeviceStatus() ? '#F0F9FF' :'F5F5F5')  // 根据状态设置背景色
           .borderRadius(15)                      // 设置圆角边框，半径为15像素
         }
         .width('100%')                           // 设置宽度为100%
@@ -474,22 +479,22 @@ export struct ZDY {
 
           // ==================== 单个设备控制按钮 ====================
           // 控制按钮
-          Button(this.getCurrentDeviceStatus() ? '关闭灯光' : '开启灯光')
+          Button(this.getCurrentDeviceStatus() ? '打开灯光' : '关闭灯光')
             .width('100%')                       // 设置宽度为100%
             .height(60)                          // 设置高度为60像素
             .fontSize(18)                        // 设置字体大小为18像素
             .fontWeight(FontWeight.Medium)       // 设置字体粗细为中等
             .fontColor(Color.White)              // 设置字体颜色为白色
-            .backgroundColor(this.getCurrentDeviceStatus() ? '#FF6B6B' : '#07C160')  // 根据状态设置背景色
+            .backgroundColor(this.getCurrentDeviceStatus() ? '#07C160':'#FF6B6B' )  // 根据状态设置背景色
             .borderRadius(15)                    // 设置圆角边框，半径为15像素
             .onClick(() => {
               // 控制按钮点击事件处理
               if (this.getCurrentDeviceStatus()) {
-                // 如果当前已开启，则关闭灯光
-                this.turnOffLight()
-              } else {
                 // 如果当前已关闭，则开启灯光
                 this.turnOnLight()
+              } else {
+                // 如果当前已开启，则关闭灯光
+                this.turnOffLight()
               }
             })
 
@@ -621,16 +626,21 @@ export struct ZDY {
    */
   private async turnOnLight() {
     try {
-      // 真实接口：state '0' 表示打开
-      await HttpUtil.getInstance().setLightBrightness(
-        `${this.URL}${this.url2}`,
-        this.defaultBrightness,
-        this.defaultColorTemperature,
-        '0',
-        this.selectedDevice
-      )
+      if(this.Lighttype==='inSona_group'){
+        await HttpUtil.getInstance().setDeviceStateOnly( `${this.URL}${this.url2}`,'0', this.selectedDevice)
+      }else{
+        // 真实接口：state '0' 表示打开
+        await HttpUtil.getInstance().setLightBrightness(
+          `${this.URL}${this.url2}`,
+          this.defaultBrightness,
+          this.defaultColorTemperature,
+          '0',
+          this.selectedDevice
+        )
+      }
+
       // 更新本地状态
-      this.deviceStatus.set(this.selectedDevice, true)
+      this.deviceStatus.set(this.selectedDevice, false)
       // 触发UI更新
       this.deviceStatus = new Map(this.deviceStatus)
     } catch (error) {
@@ -648,16 +658,20 @@ export struct ZDY {
    */
   private async turnOffLight() {
     try {
-      // 真实接口：state '1' 表示关闭
-      await HttpUtil.getInstance().setLightBrightness(
-        `${this.URL}${this.url2}`,
-        this.defaultBrightness,
-        this.defaultColorTemperature,
-        '1',
-        this.selectedDevice
-      )
+      if(this.Lighttype==='inSona_group'){
+        await HttpUtil.getInstance().setDeviceStateOnly( `${this.URL}${this.url2}`,'1', this.selectedDevice)
+      }else{
+        // 真实接口：state '1' 表示关闭
+        await HttpUtil.getInstance().setLightBrightness(
+          `${this.URL}${this.url2}`,
+          this.defaultBrightness,
+          this.defaultColorTemperature,
+          '1',
+          this.selectedDevice
+        )
+      }
       // 更新本地状态
-      this.deviceStatus.set(this.selectedDevice, false)
+      this.deviceStatus.set(this.selectedDevice, true)
       // 触发UI更新
       this.deviceStatus = new Map(this.deviceStatus)
     } catch (error) {
@@ -675,18 +689,23 @@ export struct ZDY {
    */
   private async turnOnAll() {
     try {
-      // 遍历5个控制设备
+      // 遍历8个控制设备
       for (const d of this.deviceList1) {
-        // 调用HTTP工具类开启设备
-        await HttpUtil.getInstance().setLightBrightness(
-          `${this.URL}${this.url2}`,
-          this.defaultBrightness,
-          this.defaultColorTemperature,
-          '0',  // '0'表示开启
-          d.deviceId
-        )
+        // 调用HTTP工具类关闭设备
+        if(d.type==='inSona_group'){
+          await HttpUtil.getInstance().setDeviceStateOnly( `${this.URL}${this.url2}`,'0', d.deviceId)
+        }else{
+          await HttpUtil.getInstance().setLightBrightness(
+            `${this.URL}${this.url2}`,
+            this.defaultBrightness,
+            this.defaultColorTemperature,
+            '0',  // '0'表示打开
+            d.deviceId
+          )
+        }
+
         // 更新本地状态
-        this.deviceStatus1.set(d.deviceId, true)
+        this.deviceStatus1.set(d.deviceId, false)
       }
       // 触发UI更新
       this.deviceStatus1 = new Map(this.deviceStatus1)
@@ -705,16 +724,21 @@ export struct ZDY {
    */
   private async turnOffAll() {
     try {
-      // 遍历5个控制设备
+      // 遍历8个控制设备
       for (const d of this.deviceList1) {
         // 调用HTTP工具类关闭设备
-        await HttpUtil.getInstance().setLightBrightness(
-          `${this.URL}${this.url2}`,
-          this.defaultBrightness,
-          this.defaultColorTemperature,
-          '1',  // '1'表示关闭
-          d.deviceId
-        )
+        if(d.type==='inSona_group'){
+              await HttpUtil.getInstance().setDeviceStateOnly( `${this.URL}${this.url2}`,'1', d.deviceId)
+        }else{
+          await HttpUtil.getInstance().setLightBrightness(
+            `${this.URL}${this.url2}`,
+            this.defaultBrightness,
+            this.defaultColorTemperature,
+            '1',  // '1'表示关闭
+            d.deviceId
+          )
+        }
+
         // 更新本地状态
         this.deviceStatus1.set(d.deviceId, false)
       }

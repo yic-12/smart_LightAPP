@@ -95,8 +95,9 @@ export class TokenGenerator {
       console.info(`[TokenGenerator] 原始字符串: ${rawStr}`);
 
       // 使用标准编码方式将字符串转换为字节数组
-      // 正确：encode() 直接返回字符串对应的Uint8Array
-      const encodedData: Uint8Array = new util.TextEncoder().encode(rawStr);
+      // 使用新的API替代已弃用的encode()方法
+      const textEncoder = new util.TextEncoder();
+      const encodedData: Uint8Array = textEncoder.encode(rawStr);
 
       // 创建MD5摘要算法实例
       const md5 = cryptoFramework.createMd("MD5");
