@@ -1,4 +1,4 @@
-import { LightDevice, LightingManager } from '../model/LightModel';
+import { LightDevice, LightingManager, DEVICE_IDS, DEVICE_NAMES } from '../model/LightModel';
 
 /**
  * 智能照明系统主界面
@@ -7,11 +7,26 @@ import { LightDevice, LightingManager } from '../model/LightModel';
 @Entry
 @Component
 struct Index {
-  @State lightingManager: LightingManager = LightingManager.getInstance();
-  @State currentLight: LightDevice = this.lightingManager.getDevice('light_001')!;
+  private lightingManager: LightingManager = LightingManager.getInstance();
+  @State currentLight: LightDevice = this.initializeLight();
   @State isLightOn: boolean = false;
   @State brightness: number = 50;
   @State colorTemperature: number = 4000;
+
+  /**
+   * 初始化灯光设备
+   * Initialize light device
+   */
+  private initializeLight(): LightDevice {
+    const light = this.lightingManager.getDevice(DEVICE_IDS.LIVING_ROOM_LIGHT);
+    if (!light) {
+      // Fallback: create a default light if not found
+      const defaultLight = new LightDevice(DEVICE_IDS.LIVING_ROOM_LIGHT, DEVICE_NAMES.LIVING_ROOM_LIGHT);
+      this.lightingManager.addDevice(defaultLight);
+      return defaultLight;
+    }
+    return light;
+  }
 
   build() {
     Column() {

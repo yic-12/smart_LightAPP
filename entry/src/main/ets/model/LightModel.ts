@@ -1,4 +1,16 @@
 /**
+ * 设备常量
+ * Device Constants
+ */
+export const DEVICE_IDS = {
+  LIVING_ROOM_LIGHT: 'light_001'
+};
+
+export const DEVICE_NAMES = {
+  LIVING_ROOM_LIGHT: 'Living Room Light'
+};
+
+/**
  * 智能照明设备模型
  * Smart Lighting Device Model
  */
@@ -79,7 +91,7 @@ export class LightingManager {
    */
   private initializeDevices(): void {
     // Device name will be localized in the UI layer using resource strings
-    const defaultLight = new LightDevice('light_001', 'Living Room Light');
+    const defaultLight = new LightDevice(DEVICE_IDS.LIVING_ROOM_LIGHT, DEVICE_NAMES.LIVING_ROOM_LIGHT);
     this.devices.set(defaultLight.id, defaultLight);
   }
 
