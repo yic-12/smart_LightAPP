@@ -47,6 +47,26 @@
     {
       "name": "light_off",
       "value": "灯已关闭"
+    },
+    {
+      "name": "turn_on",
+      "value": "开启"
+    },
+    {
+      "name": "turn_off",
+      "value": "关闭"
+    },
+    {
+      "name": "status_on",
+      "value": "开启"
+    },
+    {
+      "name": "status_off",
+      "value": "关闭"
+    },
+    {
+      "name": "living_room_light",
+      "value": "客厅主灯"
     }
   ]
 }

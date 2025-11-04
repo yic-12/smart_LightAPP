@@ -44,11 +44,12 @@ export class LightDevice {
   }
 
   /**
-   * 获取灯光状态描述
-   * Get light status description
+   * 获取灯光状态
+   * Get light status
+   * @returns boolean indicating if the light is on
    */
-  getStatus(): string {
-    return this.isOn ? '开启' : '关闭';
+  getStatus(): boolean {
+    return this.isOn;
   }
 }
 
@@ -77,7 +78,8 @@ export class LightingManager {
    * Initialize devices
    */
   private initializeDevices(): void {
-    const defaultLight = new LightDevice('light_001', '客厅主灯');
+    // Device name will be localized in the UI layer using resource strings
+    const defaultLight = new LightDevice('light_001', 'Living Room Light');
     this.devices.set(defaultLight.id, defaultLight);
   }
 

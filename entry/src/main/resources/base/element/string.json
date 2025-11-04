@@ -47,6 +47,26 @@
     {
       "name": "light_off",
       "value": "Light Off"
+    },
+    {
+      "name": "turn_on",
+      "value": "Turn On"
+    },
+    {
+      "name": "turn_off",
+      "value": "Turn Off"
+    },
+    {
+      "name": "status_on",
+      "value": "On"
+    },
+    {
+      "name": "status_off",
+      "value": "Off"
+    },
+    {
+      "name": "living_room_light",
+      "value": "Living Room Light"
     }
   ]
 }

@@ -37,7 +37,7 @@ struct Index {
               .margin({ bottom: 20 })
 
             // 灯光名称 Light Name
-            Text(this.currentLight.name)
+            Text($r('app.string.living_room_light'))
               .fontSize(24)
               .fontWeight(FontWeight.Medium)
               .fontColor($r('app.color.text_primary'))
@@ -50,7 +50,7 @@ struct Index {
               .margin({ bottom: 30 })
 
             // 开关按钮 Power Button
-            Button(this.isLightOn ? '关闭' : '开启')
+            Button(this.isLightOn ? $r('app.string.turn_off') : $r('app.string.turn_on'))
               .width(120)
               .height(50)
               .fontSize(18)
