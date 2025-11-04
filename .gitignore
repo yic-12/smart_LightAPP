@@ -1,0 +1,24 @@
+# HarmonyOS build artifacts
+build/
+.hvigor/
+node_modules/
+oh_modules/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Local configuration
+local.properties
+
+# Log files
+*.log
+
+# Temp files
+.tmp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,52 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "智能照明系统模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "智能照明入口"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "智能照明"
+    },
+    {
+      "name": "app_name",
+      "value": "智能照明"
+    },
+    {
+      "name": "light_control",
+      "value": "灯光控制"
+    },
+    {
+      "name": "power",
+      "value": "电源"
+    },
+    {
+      "name": "brightness",
+      "value": "亮度"
+    },
+    {
+      "name": "color_temperature",
+      "value": "色温"
+    },
+    {
+      "name": "warm",
+      "value": "暖光"
+    },
+    {
+      "name": "cool",
+      "value": "冷光"
+    },
+    {
+      "name": "light_on",
+      "value": "灯已开启"
+    },
+    {
+      "name": "light_off",
+      "value": "灯已关闭"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "smart_lightapp",
+  "version": "1.0.0",
+  "description": "基于HarmonyOS的智能照明系统",
+  "main": "",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}
