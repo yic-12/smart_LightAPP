@@ -1,0 +1,72 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Smart Lighting System Module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Smart Lighting Entry Ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Smart Light"
+    },
+    {
+      "name": "app_name",
+      "value": "Smart Light"
+    },
+    {
+      "name": "light_control",
+      "value": "Light Control"
+    },
+    {
+      "name": "power",
+      "value": "Power"
+    },
+    {
+      "name": "brightness",
+      "value": "Brightness"
+    },
+    {
+      "name": "color_temperature",
+      "value": "Color Temperature"
+    },
+    {
+      "name": "warm",
+      "value": "Warm"
+    },
+    {
+      "name": "cool",
+      "value": "Cool"
+    },
+    {
+      "name": "light_on",
+      "value": "Light On"
+    },
+    {
+      "name": "light_off",
+      "value": "Light Off"
+    },
+    {
+      "name": "turn_on",
+      "value": "Turn On"
+    },
+    {
+      "name": "turn_off",
+      "value": "Turn Off"
+    },
+    {
+      "name": "status_on",
+      "value": "On"
+    },
+    {
+      "name": "status_off",
+      "value": "Off"
+    },
+    {
+      "name": "living_room_light",
+      "value": "Living Room Light"
+    }
+  ]
+}
